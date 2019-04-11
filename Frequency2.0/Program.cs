@@ -68,6 +68,7 @@ namespace Frequency2
 		private async Task ShardReady(DiscordSocketClient arg)
 		{
 			await _client.SetGameAsync(Configuration.Config.RichPresence, type: ActivityType.Watching);
+			Audio.AudioService.Init(_lavalink);
 		}
 
 		private async Task MessageReceived(SocketMessage arg)
