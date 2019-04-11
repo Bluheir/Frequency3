@@ -190,6 +190,7 @@ ClientBin/
 *.dbmdl
 *.dbproj.schemaview
 *.jfm
+*.json
 *.pfx
 *.publishsettings
 node_modules/
