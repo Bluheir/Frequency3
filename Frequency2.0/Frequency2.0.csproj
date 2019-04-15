@@ -151,10 +151,13 @@
   <ItemGroup>
     <Compile Include="Audio\AudioService.cs" />
     <Compile Include="Config\Configuration.cs" />
+    <Compile Include="Methods\DiscordUserMethods.cs" />
+    <Compile Include="Methods\MessageMethods.cs" />
     <Compile Include="Modules\Audio.cs" />
     <Compile Include="Modules\General.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Types\Commands\CommandErrorFix.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
