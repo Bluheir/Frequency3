@@ -11,7 +11,14 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Frequency2
 {
-	
+	public class Lel
+	{
+		public string Value { get; private set; }
+		public Lel(string value)
+		{
+			Value = value;
+		}
+	}
 	class Program
 	{
 
@@ -25,7 +32,7 @@ namespace Frequency2
 
 		private readonly ConcurrentDictionary<ulong, int> _userTimeouts = new ConcurrentDictionary<ulong, int>();
 
-	    internal async Task MainAsync()
+		internal async Task MainAsync()
 		{
 			var config = Configuration.Config;
 
@@ -51,8 +58,8 @@ namespace Frequency2
 				//.AddSingleton(LavaClient)
 				.AddSingleton(Audio.AudioService.Instance)
 				.BuildServiceProvider();
-			
-			
+
+
 			await _commands.AddModulesAsync(System.Reflection.Assembly.GetEntryAssembly(), _services);
 
 			_client.MessageReceived += MessageReceived;
@@ -74,13 +81,13 @@ namespace Frequency2
 
 		private async Task TimeOutReset()
 		{
-			while(true)
+			while (true)
 			{
 				await Task.Delay(10000);
 				_userTimeouts.Clear();
 			}
 		}
-	
+
 		private int shardnum = 0;
 		private async Task ShardReady(/*DiscordSocketClient arg*/)
 		{
@@ -116,11 +123,11 @@ namespace Frequency2
 			}
 
 			var result = await _commands.ExecuteAsync(Context, argpos, _services);
-			if(!result.IsSuccess)
+			if (!result.IsSuccess)
 			{
-				_ = Context.Channel.SendMessageAsync($"{Context.User.Mention} Error: `{result.ErrorReason}`");                                                 
+				_ = Context.Channel.SendMessageAsync($"{Context.User.Mention} Error: `{result.ErrorReason}`");
 			}
 		}
-		
+
 	}
 }
