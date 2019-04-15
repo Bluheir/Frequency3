@@ -151,6 +151,8 @@
   <ItemGroup>
     <Compile Include="Audio\AudioService.cs" />
     <Compile Include="Config\Configuration.cs" />
+    <Compile Include="MainTypes\CommandHandler.cs" />
+    <Compile Include="MainTypes\Logger.cs" />
     <Compile Include="Methods\DiscordUserMethods.cs" />
     <Compile Include="Methods\MessageMethods.cs" />
     <Compile Include="Modules\Audio.cs" />
