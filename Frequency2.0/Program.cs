@@ -11,14 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Frequency2
 {
-	public class Lel
-	{
-		public string Value { get; private set; }
-		public Lel(string value)
-		{
-			Value = value;
-		}
-	}
+	
 	class Program
 	{
 
