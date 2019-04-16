@@ -1,17 +1,17 @@
-﻿using Discord;
-using Discord.WebSocket;
+﻿using Discord.WebSocket;
 using Discord.Commands;
 using System;
 using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
-namespace Frequency2.MainTypes
+namespace Frequency2.Source
 {
 	public class CommandHandler
 	{
 		private readonly DiscordShardedClient _client;
 		private readonly CommandService _commandService;
 		private readonly IServiceProvider _services;
-
+		private readonly ConcurrentDictionary<ulong, int> _userTimeouts = new ConcurrentDictionary<ulong, int>();
 		public CommandHandler(DiscordShardedClient client, CommandService commandService, IServiceProvider services)
 		{
 			_client = client;
@@ -26,12 +26,40 @@ namespace Frequency2.MainTypes
 			if (hookEvents)
 			{
 				_client.MessageReceived += MessageReceived;
+				_ = TimeOutReset();
 			}
 		}
-
-		private Task MessageReceived(SocketMessage message)
+		private async Task TimeOutReset()
 		{
-			return Task.CompletedTask;
+			while (true)
+			{
+				await Task.Delay(10000);
+				_userTimeouts.Clear();
+			}
+		}
+		private async Task MessageReceived(SocketMessage message)
+		{
+			SocketUserMessage Message = message as SocketUserMessage;
+			SocketCommandContext Context = new ShardedCommandContext(_client, Message);
+
+			if (Context.User.IsBot)
+				return;
+
+			int argpos = 0;
+			if (!Message.HasStringPrefix(".f", ref argpos) && !Message.HasMentionPrefix(Context.Client.CurrentUser, ref argpos))
+				return;
+
+			if (_userTimeouts.AddOrUpdate(Context.User.Id, 1, (ulong id, int i) => { return i + 1; }) == 5)
+			{
+				_userTimeouts[Context.User.Id]--;
+				return;
+			}
+
+			var result = await _commandService.ExecuteAsync(Context, argpos, _services);
+			if (!result.IsSuccess)
+			{
+				_ = Context.Channel.SendMessageAsync($"{Context.User.Mention} Error: `{result.ErrorReason}`");
+			}
 		}
 	}
 }

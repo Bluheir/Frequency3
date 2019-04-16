@@ -3,7 +3,7 @@ using System;
 using System.IO;
 using System.Text;
 
-namespace Frequency2._0.MainTypes
+namespace Frequency2.Source
 {
 	public class Logger
 	{
