@@ -15,8 +15,6 @@ namespace Frequency2
 	class Program
 	{
 		private static void Main()
-		=> MainAsync();
-		private static async void MainAsync()
-		=> await new Frequency2Client().StartAsync();
+		=> new Frequency2Client().StartAsync().GetAwaiter().GetResult();
 	}
 }

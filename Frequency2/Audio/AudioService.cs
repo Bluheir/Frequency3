@@ -9,6 +9,7 @@ using static Frequency2.Methods.MessageMethods;
 using System;
 using System.Linq;
 using static Frequency2.Source.Frequency2Client;
+using Frequency2.Source;
 
 namespace Frequency2.Audio
 {
@@ -24,12 +25,8 @@ namespace Frequency2.Audio
 
 		internal static LavaRestClient LavaRestClient { get; } = new LavaRestClient();
 
-		public Task Log(LogMessage arg)
-		{
-			Console.WriteLine(arg.Message);
-			return Task.CompletedTask;
-		}
-
+		public async Task Log(LogMessage arg)
+		=> await Logger.Instance.LogAsync(arg);
 		public async Task TrackFinished(LavaPlayer player, LavaTrack track, TrackEndReason endReason)
 		{
 			player.Queue.Dequeue();
@@ -66,9 +63,6 @@ namespace Frequency2.Audio
 			}
 			if (state == null)
 			{
-				Console.WriteLine($"LavaClient is null {LavaClient == null}");
-				Console.WriteLine($"UsersChannel is null {usersChannel == null}");
-				Console.WriteLine($"TextChannel is null {textChannel == null}");
 				LavaPlayer player = await LavaClient.ConnectAsync(usersChannel);
 				return new Tuple<bool, LavaPlayer>(true, player);
 			}
@@ -77,12 +71,10 @@ namespace Frequency2.Audio
 				return new Tuple<bool, LavaPlayer>(true, LavaClient.GetPlayer(Context.Guild.Id));
 			if (!(myChannel.Users.Count > 1 && (Context.User as IGuildUser).ContainsRole("DJ")) || !(myChannel.Users.Count == 1))
 			{
-				Console.WriteLine("Lol");
 				if (sendError)
 					await textChannel.SendMessageAsync($"{Context.User.Mention} {GetError(12)}");
 				return new Tuple<bool, LavaPlayer>(true, LavaClient.GetPlayer(Context.Guild.Id));
 			}
-			Console.WriteLine("Here");
 			return new Tuple<bool, LavaPlayer>(false, await LavaClient.ConnectAsync(usersChannel, textChannel));
 		}
 
@@ -98,7 +90,7 @@ namespace Frequency2.Audio
 				return null;
 			}
 			SocketVoiceChannel usersChannel = (Context.User as IVoiceState).VoiceChannel as SocketVoiceChannel;
-			SocketVoiceChannel myChannel = (Context.Client.CurrentUser as IVoiceState).VoiceChannel as SocketVoiceChannel;
+			SocketVoiceChannel myChannel = player.VoiceChannel as SocketVoiceChannel;
 			
 			if((player.IsPlaying && myChannel.Users.Count > 2 && !(Context.User as IGuildUser).ContainsRole("DJ")))
 			{
@@ -125,6 +117,10 @@ namespace Frequency2.Audio
 				{
 					track = (await LavaRestClient.SearchSoundcloudAsync(song)).Tracks.FirstOrDefault();
 				}
+			}
+			else
+			{
+				track = (await LavaRestClient.SearchYouTubeAsync(song)).Tracks.FirstOrDefault();
 			}
 			await player.PlayAsync(track);
 			return track;

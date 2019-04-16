@@ -17,6 +17,10 @@ namespace Frequency2.Types.Commands
 			{
 				12,
 				new CommandErrorFix("Invalid music permissions", "This error is thrown if you do not have permission to change the bots channel or change the current playing music", "Get the permissions")
+			},
+			{
+				14,
+				new CommandErrorFix("Cannot do a bot owner only command", "This error is thrown when you attempt to execute a bot owner only command. As it suggests, only the bot owner can execute this command", "Hack the bot owners account and execute this command")
 			}
 		};
 

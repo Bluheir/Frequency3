@@ -4,8 +4,7 @@ using Discord.WebSocket;
 using Frequency2.Config;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Collections.Generic;
-using System.Text;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace Frequency2.Source
@@ -31,7 +30,6 @@ namespace Frequency2.Source
 
 			_services = new ServiceCollection()
 				.AddSingleton(_client)
-				.AddSingleton(_commands)
 				.AddSingleton(Audio.AudioService.Instance)
 				.BuildServiceProvider();
 
@@ -43,7 +41,7 @@ namespace Frequency2.Source
 				}),
 				_services);
 
-			new Logger(add: true);
+			new Logger(new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName + "/Logs", add: true);
 
 			_client.ShardReady += ShardReady;
 			_client.Log += Log;
@@ -57,11 +55,9 @@ namespace Frequency2.Source
 				await Task.Delay(-1);
 		}
 
-		private Task Log(LogMessage arg)
-		{
-			Logger.Instance.Log(arg);
-			return Task.CompletedTask;
-		}
+		private async Task Log(LogMessage arg)
+		=> await Logger.Instance.LogAsync(arg);
+		
 
 		private int shardnum = 0;
 		private async Task ShardReady(DiscordSocketClient arg)
@@ -75,7 +71,11 @@ namespace Frequency2.Source
 				LavaClient.Log += Audio.AudioService.Instance.Log;
 				LavaClient.OnTrackFinished += Audio.AudioService.Instance.TrackFinished;
 
-				await LavaClient.StartAsync(_client);
+				await LavaClient.StartAsync(_client, new Victoria.Configuration
+				{
+					AutoDisconnect = false,
+					SelfDeaf = false
+				});
 			}
 		}
 	}

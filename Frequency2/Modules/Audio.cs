@@ -15,7 +15,7 @@ namespace Frequency2.Modules
 
 		
 		[Command("play", RunMode = RunMode.Async)]
-		public async Task PlayAsync(string url)
+		public async Task PlayAsync([Remainder]string url)
 		{
 			await Audio.PlayAsync(url, Context, Context.Channel as ITextChannel);
 		}
