@@ -8,7 +8,7 @@ using Victoria.Entities;
 using static Frequency2.Methods.MessageMethods;
 using System;
 using System.Linq;
-using static Frequency2.Program;
+using static Frequency2.Source.Frequency2Client;
 
 namespace Frequency2.Audio
 {

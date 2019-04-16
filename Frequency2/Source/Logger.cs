@@ -8,10 +8,13 @@ namespace Frequency2.Source
 	public class Logger
 	{
 		public static Logger Instance { get; private set; }
-		public StringBuilder Text { get; }
+
+		public string Text => _text.ToString();
+
+		private readonly StringBuilder _text;
 		public Func<LogMessage, string> Action { get; }
 
-		public Logger(Func<LogMessage, string> action = null, bool add = true)
+		public Logger(Func<LogMessage, string> action = null, bool add = false)
 		{
 			Func<LogMessage, string> func = x =>
 			{
@@ -20,15 +23,18 @@ namespace Frequency2.Source
 				return text;
 			};
 			Action = action ?? func;
-			Text = new StringBuilder();
+			_text = new StringBuilder();
 			if (add)
 				Instance = this;
 		}
 
 		public void Log(LogMessage message, bool newline = true)
-		=> Text.Append(Action(message) + (newline ? "\n" : ""));
+		=> _text.Append(Action(message) + (newline ? "\n" : ""));
 
 		public void AddString(string text, bool newline = true)
-		=> Text.Append(text + (newline ? "\n" : ""));
+		=> _text.Append(text + (newline ? "\n" : ""));
+
+		public override string ToString()
+		=> Text;
 	}
 }
