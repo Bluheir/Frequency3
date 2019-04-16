@@ -99,7 +99,7 @@ namespace Frequency2
 
 				LavaClient.Log += Audio.AudioService.Instance.Log;
 				LavaClient.OnTrackFinished += Audio.AudioService.Instance.TrackFinished;
-
+				
 				await LavaClient.StartAsync(_client);
 			}
 		}
