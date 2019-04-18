@@ -58,24 +58,7 @@ namespace Frequency2.Audio
 
 			if (endReason != TrackEndReason.Replaced && !guild.IsPlayed)
 			{
-				
-				EmbedBuilder Embed = new EmbedBuilder
-				{
-					Title = "Playing Song",
-					Description = $"[{track.Title}]({track.Uri.AbsoluteUri})"
-				};
-
-				Embed.AddField("Length", track.Length.ToString(), true);
-				if(guild.Repeat)
-					Embed.AddField("Tracks in Queue", (player.Queue.Count + 1).ToString(), true);
-				else
-					Embed.AddField("Tracks in Queue", (player.Queue.Count).ToString(), true);
-				Embed.AddField("Previous Track", ptrack.Title, true);
-				Embed.AddField("Next Track", (player.Queue.Count == 0) ? "No tracks" : (player.Queue.Peek() as LavaTrack).Title, true);
-
-				Embed.ImageUrl = await track.FetchThumbnailAsync();
-
-				await player.TextChannel.SendMessageAsync("", false, Embed.Build());
+				await player.TextChannel.SendMessageAsync("", false, await EmbedMethods.GetEmbedQueue(track, player, ptrack));
 				await player.PlayAsync(track);
 			}
 			
@@ -204,6 +187,7 @@ namespace Frequency2.Audio
 		{
 			var tplayer = await JoinAsync(Context, textChannel, false);
 			var player = tplayer.Item2;
+			var guild = _guildConfigs.GetOrAdd(player.VoiceChannel.GuildId, new GuildMusicConfig());
 
 			if (tplayer.Item1 == Error)
 			{
@@ -218,16 +202,21 @@ namespace Frequency2.Audio
 				return false;
 			}
 
-			SocketVoiceChannel channel = player.VoiceChannel as SocketVoiceChannel;
+			SocketVoiceChannel myChannel = player.VoiceChannel as SocketVoiceChannel;
 			SocketVoiceChannel userChannel = (Context.User as IVoiceState).VoiceChannel as SocketVoiceChannel;
 
-			if (!(player.IsPlaying && userChannel == channel && channel.Users.Count > 2 && (Context.User as IGuildUser).ContainsRole("DJ")))
+			if ((player.IsPlaying && myChannel.Users.Count > 2 && !(Context.User as IGuildUser).ContainsRole("DJ")))
+			{
+				if (sendError)
+					await textChannel.SendMessageAsync($"{Context.User.Mention} {GetError(12)}");
 				return false;
-			if (player.Queue.Count == 0 && !clear)
+			}
+			if (player.Queue.Count == 0 && !clear && !guild.IsPlayed)
 				return await PlayTracksAsync(url, Context, textChannel, sendError, true);
 				
 			if (clear)
 				player.Queue.Clear();
+
 			var tracks = (await LavaRestClient.SearchTracksAsync(url)).Tracks;
 			foreach (var track in tracks)
 			{
@@ -303,7 +292,6 @@ namespace Frequency2.Audio
 			}
 			return track;
 		}
-
 		public async Task SkipTrackAsync(ICommandContext Context, ITextChannel textChannel, bool sendError = true)
 		{
 			var player = LavaClient.GetPlayer(Context.Guild.Id);
@@ -325,19 +313,27 @@ namespace Frequency2.Audio
 				return;
 			}
 			if (guild.Repeat && player.Queue.Count != 0)
-				await player.SkipAsync();
+			{
+				var ptrack = await player.SkipAsync();
+				var track = player.CurrentTrack;
+
+				await textChannel.SendMessageAsync("", false, await EmbedMethods.GetEmbedQueue(track, player, ptrack));
+			}
 			else
 			{
 				if (player.Queue.Count > 0)
-					await player.SkipAsync();
+				{
+					var ptrack = await player.SkipAsync();
+					var track = player.CurrentTrack;
+
+					await textChannel.SendMessageAsync("", false, await EmbedMethods.GetEmbedQueue(track, player, ptrack));
+				}
 				else
 					await player.StopAsync();
 			}
 			if(sendError && user.SendCompMessage)
 				await textChannel.SendMessageAsync(":musical_note: Successfully skipped the current track!");
 		}
-
-
 		public async Task PauseAsync(ICommandContext Context, ITextChannel textChannel, bool sendError = true)
 		{
 			var player = LavaClient.GetPlayer(Context.Guild.Id);
@@ -352,7 +348,7 @@ namespace Frequency2.Audio
 			var myChannel = player.VoiceChannel as SocketVoiceChannel;
 
 
-			if ((player.IsPlaying && myChannel.Users.Count > 2 && !(Context.User as IGuildUser).ContainsRole("DJ")))
+			if (myChannel.Users.Count > 2 && !(Context.User as IGuildUser).ContainsRole("DJ"))
 			{
 				bool right = true;
 
@@ -369,6 +365,8 @@ namespace Frequency2.Audio
 						}
 					}
 				}
+				else
+					right = false;
 				if (!right)
 				{
 					if (sendError)
@@ -378,11 +376,13 @@ namespace Frequency2.Audio
 				}
 			}
 
-			await player.PauseAsync();
+			if (player.IsPaused)
+				await player.ResumeAsync();
+			else
+				await player.PauseAsync();
 			if (sendError && user.SendCompMessage)
-				await textChannel.SendMessageAsync(":musical_note: Successfully paused the current song!");
+				await textChannel.SendMessageAsync(":musical_note: Successfully paused/resumed the current song!");
 		}
-
 		public async Task RepeatAsync(ICommandContext Context, ITextChannel textChannel, bool sendError = true)
 		{
 
@@ -413,7 +413,6 @@ namespace Frequency2.Audio
 			if (user.SendCompMessage && sendError)
 				await textChannel.SendMessageAsync(":musical_note: Toggled repeating for the queue!");
 		}
-
 		public async Task<LavaTrack> GetTrack(string url, bool prioritiseSoundcloud = false)
 		{
 			try
