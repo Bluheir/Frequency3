@@ -6,12 +6,41 @@ namespace Frequency2.Config
 {
 	public abstract class Configuration
 	{
+		public abstract class LavaLinkConfiguration
+		{
+			public abstract string Host { get; }
+			public abstract int Port { get; }
+			public abstract string Password { get; }
+
+			internal class lavalinkconfig : LavaLinkConfiguration
+			{
+				[JsonIgnore]
+				public override string Host => _Host;
+
+				[JsonIgnore]
+				public override int Port => _Port;
+
+				[JsonIgnore]
+				public override string Password => _Password;
+
+				[JsonProperty("Host")]
+				private readonly string _Host = "";
+
+				[JsonProperty("Port")]
+				private readonly int _Port = 0;
+
+				[JsonProperty("Password")]
+				private readonly string _Password = "";
+ 			}
+		}
 		public abstract ulong OwnerId { get; }
 		public abstract string RichPresence { get; }
 		public abstract string Token { get; }
 		public abstract string ApexApiKey { get; }
 		public abstract string FortniteApiKey { get; }
 		public abstract string WolframApiKey { get; }
+
+		public abstract LavaLinkConfiguration LavaLinkSettings { get; }
 
 		private static Configuration config = null;
 
@@ -59,6 +88,9 @@ namespace Frequency2.Config
 			[JsonIgnore]
 			public override string WolframApiKey { get => WolframApiKey_; }
 
+			[JsonIgnore]
+			public override LavaLinkConfiguration LavaLinkSettings { get => Lavalinkconfig_; }
+
 			[JsonProperty("Token")]
 			private readonly string Token_ = "";
 
@@ -76,6 +108,9 @@ namespace Frequency2.Config
 
 			[JsonProperty("ApexApiKey")]
 			private readonly string ApexApiKey_ = "";
+
+			[JsonProperty("LavaLinkSettings")]
+			private readonly LavaLinkConfiguration.lavalinkconfig Lavalinkconfig_ = null;
 
 		}
 

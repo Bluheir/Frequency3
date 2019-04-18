@@ -12,8 +12,5 @@ namespace Frequency2.Methods
 		public static bool ContainsRole(this IGuildUser user, ulong roleId)
 		=> (user as SocketGuildUser).Roles.FirstOrDefault(x => x.Id == roleId) != null;
 
-		public static bool IsPrivateMessage(this IMessage message)
-		=> message.Channel is IDMChannel;
-
 	}
 }

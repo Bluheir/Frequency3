@@ -4,6 +4,8 @@ using Discord.WebSocket;
 using Frequency2.Config;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using Frequency2.Data.Models;
+using Frequency2.Data;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -46,6 +48,17 @@ namespace Frequency2.Source
 			_client.ShardReady += ShardReady;
 			_client.Log += Log;
 
+			Databases.Users = await DataBase<long, UserData>.Async(new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName + "/Databases/Users.db", x =>
+			{
+				UserData retVal = new UserData
+				{
+					Key = x,
+					Prefix = ".f",
+					SendCompMessage = true
+				};
+				return retVal;
+			});
+
 			await _commands.InitializeAsync();
 
 			await _client.LoginAsync(TokenType.Bot, config.Token);
@@ -65,7 +78,6 @@ namespace Frequency2.Source
 			if (++shardnum == _client.Shards.Count)
 			{
 				await _client.SetGameAsync(Configuration.Config.RichPresence, type: ActivityType.Watching);
-				Console.WriteLine(LavaClient == null || _client == null);
 				LavaClient = new Victoria.LavaShardClient();
 
 				LavaClient.Log += Audio.AudioService.Instance.Log;
@@ -74,7 +86,11 @@ namespace Frequency2.Source
 				await LavaClient.StartAsync(_client, new Victoria.Configuration
 				{
 					AutoDisconnect = false,
-					SelfDeaf = false
+					SelfDeaf = false,
+					LogSeverity = LogSeverity.Info,
+					Host = Configuration.Config.LavaLinkSettings.Host,
+					Password = Configuration.Config.LavaLinkSettings.Password,
+					Port = Configuration.Config.LavaLinkSettings.Port
 				});
 			}
 		}

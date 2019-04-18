@@ -3,6 +3,7 @@ using Discord.Commands;
 using System;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
+using static Frequency2.Data.Databases;
 
 namespace Frequency2.Source
 {
@@ -46,7 +47,11 @@ namespace Frequency2.Source
 				return;
 
 			int argpos = 0;
-			if (!Message.HasStringPrefix(".f", ref argpos) && !Message.HasMentionPrefix(Context.Client.CurrentUser, ref argpos))
+
+			var user = await Users.GetOrAddValue((long)Context.User.Id);
+			await Users.SaveAsync(user);
+
+			if (!Message.HasStringPrefix(user.Prefix, ref argpos) && !Message.HasMentionPrefix(Context.Client.CurrentUser, ref argpos))
 				return;
 
 			if (_userTimeouts.AddOrUpdate(Context.User.Id, 1, (ulong id, int i) => { return i + 1; }) == 5)
@@ -59,6 +64,7 @@ namespace Frequency2.Source
 			if (!result.IsSuccess)
 			{
 				_ = Context.Channel.SendMessageAsync($"{Context.User.Mention} Error: `{result.ErrorReason}`");
+				
 			}
 		}
 	}

@@ -225,6 +225,9 @@ FakesAssemblies/
 
 # GhostDoc plugin setting file
 *.GhostDoc.xml
+Frequency2/Logs
+Frequency2/Databases
+Frequency2/LavaLink
 
 # Node.js Tools for Visual Studio
 .ntvs_analysis.dat

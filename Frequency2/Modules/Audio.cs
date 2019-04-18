@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using Discord;
 using System.Collections.Generic;
 using System;
+using Frequency2.Methods;
 using Frequency2.Audio;
 using System.Threading.Tasks;
 
@@ -17,15 +18,74 @@ namespace Frequency2.Modules
 		[Command("play", RunMode = RunMode.Async)]
 		public async Task PlayAsync([Remainder]string url)
 		{
+			if (Context.Message.IsPrivate())
+				return;
 			await Audio.PlayAsync(url, Context, Context.Channel as ITextChannel);
 		}
 
 		[Command("join", RunMode = RunMode.Async)]
 		public async Task JoinAsync()
 		{
-			
-			//Console.WriteLine(Activator.CreateInstance(typeof(AudioService)));
+			if (Context.Message.IsPrivate())
+				return;
 			await Audio.JoinAsync(Context, Context.Channel as ITextChannel);
 		}
+
+		[Command("playlist")]
+		public async Task PlayListAsync([Remainder]string url)
+		{
+			if (Context.Message.IsPrivate())
+				return;
+			await Audio.PlayTracksAsync(url, Context, Context.Channel as ITextChannel);
+		}
+
+		[Command("queuesc")]
+		public async Task EnqueueSCAsync([Remainder]string url)
+		{
+			if (Context.Message.IsPrivate())
+				return;
+			await Audio.QueueAsync(url, Context, Context.Channel as ITextChannel, prioritiseSoundcloud: true);
+		}
+
+		[Command("searchsc"), Alias("soundcloudsearch", "playsoundcloud")]
+		public async Task SearchSCAsync([Remainder]string query)
+		{
+			if (Context.Message.IsPrivate())
+				return;
+			await Audio.PlayAsync(query, Context, Context.Channel as ITextChannel, prioritiseSoundcloud: true);
+		}
+
+		[Command("queue"), Alias("enqueue")]
+		public async Task EnqueueYTAsync([Remainder]string query)
+		{
+			if (Context.Message.IsPrivate())
+				return;
+			await Audio.QueueAsync(query, Context, Context.Channel as ITextChannel);
+		}
+
+		[Command("skip")]
+		public async Task SkipAsync()
+		{
+			if (Context.Message.IsPrivate())
+				return;
+			await Audio.SkipTrackAsync(Context, Context.Channel as ITextChannel);
+		}
+
+		[Command("pause")]
+		public async Task PauseAsync()
+		{
+			if (Context.Message.IsPrivate())
+				return;
+			await Audio.PauseAsync(Context, Context.Channel as ITextChannel);
+		}
+
+		[Command("repeat")]
+		public async Task RepeatAsync()
+		{
+			if (Context.Message.IsPrivate())
+				return;
+			await Audio.RepeatAsync(Context, Context.Channel as ITextChannel);
+		}
+
 	}
 }

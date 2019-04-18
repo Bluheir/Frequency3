@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Frequency2
+﻿namespace Frequency2
 {
 	class Program
 	{
+		private static void Main()
+		=> new Source.Frequency2Client().StartAsync().GetAwaiter().GetResult();
 	}
 }
