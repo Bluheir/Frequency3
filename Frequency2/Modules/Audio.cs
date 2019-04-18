@@ -87,5 +87,12 @@ namespace Frequency2.Modules
 			await Audio.RepeatAsync(Context, Context.Channel as ITextChannel);
 		}
 
+		[Command("queuelist")]
+		public async Task QueueList([Remainder]string url)
+		{
+			if (Context.Message.IsPrivate())
+				return;
+			await Audio.PlayTracksAsync(url, Context, Context.Channel as ITextChannel, clear: false);
+		}
 	}
 }
