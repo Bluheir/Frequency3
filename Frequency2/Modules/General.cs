@@ -19,7 +19,8 @@ namespace Frequency2.Modules
 			
 		}
 
-		[Command("commandinfo")]
+		[Command("commandinfo", RunMode = RunMode.Async)]
+		[Summary("Gets the info about a command including its parameters and summary for its parameters")]
 		public async Task GetCommandInfoAsync([Remainder, Summary("The command name")]string commandname)
 		{
 			IMessageChannel channel;
@@ -27,15 +28,15 @@ namespace Frequency2.Modules
 				channel = Context.Channel;
 			else
 				channel = await Context.User.GetOrCreateDMChannelAsync();
-			if(!Frequency2Client.Instance.CommandInfos.TryGetValue(commandname, out CommandInfo info))
+			if(!Frequency2Client.Instance.CommandInfos.TryGetValue(commandname.ToLower(), out CommandInfo info))
 			{
 				await channel.SendMessageAsync($"{Context.User.Mention} {GetError(19)}");
 				return;
 			}
 			EmbedBuilder Embed = new EmbedBuilder();
 
-			Embed.WithTitle($"Command: {commandname}");
-			Embed.AddField("Summary:", info.Summary);
+			Embed.WithTitle($"Command: {commandname.ToLower()}");
+			Embed.AddField("Summary:", info.Summary ?? "No summary provided");
 
 			string title = "Parameters:";
 			string parameters = "";
@@ -44,11 +45,12 @@ namespace Frequency2.Modules
 			{
 				parameters += $"    **Parameter Name**: {parameter.Name}\n    **Summary** : {parameter.Summary ?? "No summary provided"}\n";
 			}
-
-			Embed.AddField(title, parameters);
+			if(parameters != "")
+				Embed.AddField(title, parameters);
 
 			await channel.SendMessageAsync("", false, Embed.Build());
 		}
+		
 
 		
 	}
