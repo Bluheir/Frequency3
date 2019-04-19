@@ -39,10 +39,15 @@ namespace Frequency2.Audio
 		{
 			var guild = _guildConfigs.GetOrAdd(player.VoiceChannel.GuildId, new GuildMusicConfig());
 
+			LavaTrack track = null;
+
+			if (guild.Repeat && !guild.IsPlayed)
+				player.Queue.Enqueue(ptrack);
 
 			guild.IsPlayed = endReason == TrackEndReason.Replaced;
 
-			LavaTrack track = null;
+			if (!guild.IsPlayed)
+				track = player.Queue.Dequeue() as LavaTrack;
 
 			if (player.Queue.Count == 0 && !guild.Repeat)
 			{
@@ -60,11 +65,6 @@ namespace Frequency2.Audio
 				return;
 
 			}
-			
-			if(guild.Repeat)
-				player.Queue.Enqueue(ptrack);
-			if(!guild.IsPlayed)
-				track = player.Queue.Dequeue() as LavaTrack;
 
 			if (endReason != TrackEndReason.Replaced/* && !guild.IsPlayed)//*/)
 			{
