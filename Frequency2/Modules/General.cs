@@ -50,8 +50,5 @@ namespace Frequency2.Modules
 
 			await channel.SendMessageAsync("", false, Embed.Build());
 		}
-		
-
-		
 	}
 }
