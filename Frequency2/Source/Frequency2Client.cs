@@ -8,16 +8,79 @@ using Frequency2.Data.Models;
 using Frequency2.Data;
 using System.IO;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Linq;
+using Frequency2.Types.Attributes;
+using Frequency2.Methods;
 
 namespace Frequency2.Source
 {
-	public class Frequency2Client
+	
+	public sealed class Frequency2Client
 	{
 
 		private DiscordShardedClient _client;
 		private CommandHandler _commands;
 		private IServiceProvider _services;
+		
 		public static Victoria.LavaShardClient LavaClient { get; private set; }
+		private Frequency2Client(){}
+
+		public static Frequency2Client Instance { get; } = new Frequency2Client();
+		
+		public IReadOnlyList<CommandInfo> Commands
+		{
+			get
+			{
+				if (_comms == null)
+					_comms = GetCommands();
+				return _comms;
+			}
+		}
+		public IReadOnlyDictionary<string, CommandInfo>  CommandInfos { get; private set; }
+
+		private IReadOnlyList<CommandInfo> _comms = null;
+
+		private IReadOnlyList<CommandInfo> GetCommands(bool all = false)
+		{
+			if (all)
+				return _commands.GetCommands();
+			var retVal = new List<CommandInfo>();
+			var modules = _commands.GetModules();
+			var Commands = new Dictionary<string, CommandInfo>();
+			foreach(var module in modules)
+			{
+				bool cont = true;
+				foreach(var attribute in module.Attributes)
+				{
+					if(attribute.GetType() == typeof(IgnoreAttribute))
+					{
+						cont = false;
+						break;
+					}
+				}
+				if (!cont)
+					continue;
+				foreach(var command in module.Commands)
+				{
+					bool con = true;
+					foreach(var attribute in command.Attributes)
+					{
+						if(attribute.GetType() == typeof(IgnoreAttribute))
+						{
+							con = false;
+							break;
+						}
+					}
+					if (!con)
+						continue;
+					retVal.Add(command);
+					Commands.Add(CommandsReflection.GetFullName(command), command);
+				}
+			}
+			CommandInfos = Commands;
+			return retVal;
+		}
 
 		public async Task StartAsync(bool sleep = true)
 		{
@@ -30,6 +93,8 @@ namespace Frequency2.Source
 				MessageCacheSize = 1000
 			});
 
+
+			
 			_services = new ServiceCollection()
 				.AddSingleton(_client)
 				.AddSingleton(Audio.AudioService.Instance)
@@ -60,7 +125,7 @@ namespace Frequency2.Source
 			});
 
 			await _commands.InitializeAsync();
-
+			_ = Commands;
 			await _client.LoginAsync(TokenType.Bot, config.Token);
 			await _client.StartAsync();
 
