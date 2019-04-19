@@ -4,10 +4,12 @@ using System;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using static Frequency2.Data.Databases;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Frequency2.Source
 {
-	public class CommandHandler
+	public sealed class CommandHandler
 	{
 		private readonly DiscordShardedClient _client;
 		private readonly CommandService _commandService;
@@ -67,5 +69,11 @@ namespace Frequency2.Source
 				
 			}
 		}
+
+		public IReadOnlyList<CommandInfo> GetCommands()
+			=> _commandService.Commands.ToList();
+		public IReadOnlyList<ModuleInfo> GetModules()
+			=> _commandService.Modules.ToList();
+		
 	}
 }
