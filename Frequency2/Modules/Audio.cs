@@ -94,5 +94,14 @@ namespace Frequency2.Modules
 				return;
 			await Audio.PlayTracksAsync(url, Context, Context.Channel as ITextChannel, clear: false);
 		}
+
+		[Command("shuffle")]
+		public async Task ShuffleAsync()
+		{
+			if (Context.Message.IsPrivate())
+				return;
+			await Audio.ShuffleAsync(Context, Context.Channel as ITextChannel);
+		}
+
 	}
 }
