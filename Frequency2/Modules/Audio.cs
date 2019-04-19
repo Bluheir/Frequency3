@@ -17,7 +17,7 @@ namespace Frequency2.Modules
 
 
 		[Command("play", RunMode = RunMode.Async)]
-		[Summary("Joins the current users void channel and plays the specified song. If the url isn't valid, searched YouTube for the term")]
+		[Summary("Joins the current users void channel and plays the specified song. If the url isn't valid, searches YouTube for the term")]
 		public async Task PlayAsync([Remainder, Summary("The url or search term")]string query)
 		{
 			if (Context.Message.IsPrivate())
