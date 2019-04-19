@@ -53,7 +53,7 @@ namespace Frequency2.Modules
 		}
 
 		[Command("searchsc"), Alias("soundcloudsearch", "playsoundcloud")]
-		[Summary("Joins the current users void channel and plays the specified song. If the url isn't valid, searched SoundCloud for the term")]
+		[Summary("Joins the current users void channel and plays the specified song. If the url isn't valid, searches SoundCloud for the term")]
 		public async Task SearchSCAsync([Remainder, Summary("The url or search term")]string query)
 		{
 			if (Context.Message.IsPrivate())
