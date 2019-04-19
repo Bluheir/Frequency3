@@ -33,6 +33,10 @@ namespace Frequency2.Types.Commands
 			{
 				17,
 				new CommandErrorFix("Not playing a song", "This error is thrown when you attempt to pause a song when none is playing, or when you attempt to attempt to pause a song when I am not in a voice channel", "Execute that command when a song is playing")
+			},
+			{
+				18,
+				new CommandErrorFix("No songs in queue", "This error is thrown when you attempt to shuffle the queue and there are less than 2 songs", "Shuffle the queue when there is at least 2 songs.")
 			}
 		};
 
