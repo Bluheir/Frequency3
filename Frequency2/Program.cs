@@ -3,6 +3,6 @@
 	class Program
 	{
 		private static void Main()
-		=> new Source.Frequency2Client().StartAsync().GetAwaiter().GetResult();
+		=> Source.Frequency2Client.Instance.StartAsync().GetAwaiter().GetResult();
 	}
 }
