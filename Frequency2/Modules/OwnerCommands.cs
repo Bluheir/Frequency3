@@ -5,12 +5,15 @@ using Frequency2.Config;
 using System;
 using Discord;
 using static Frequency2.Methods.MessageMethods;
+using Frequency2.Types.Attributes;
 
 namespace Frequency2.Modules
 {
+	[Ignore]
 	public class OwnerCommands : ModuleBase<ShardedCommandContext>
 	{
 		[Command("savelog")]
+		
 		public async Task SaveLogAsync()
 		{
 			if(Context.User.Id != Configuration.Config.OwnerId)
