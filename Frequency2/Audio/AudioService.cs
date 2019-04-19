@@ -438,7 +438,8 @@ namespace Frequency2.Audio
 
 			if(player.Queue.Count < 2)
 			{
-				
+				if (sendError)
+					await textChannel.SendMessageAsync($"{Context.User.Mention} {GetError(18)}");
 			}
 			var myChannel = player.VoiceChannel as SocketVoiceChannel;
 
@@ -449,6 +450,10 @@ namespace Frequency2.Audio
 				return;
 			}
 
+			player.Queue.Shuffle();
+
+			if (sendError && user.SendCompMessage)
+				await(textChannel.SendMessageAsync($":musical_note: Successfully shuffled the queue!"));
 
 			
 		}
