@@ -95,7 +95,7 @@ namespace Frequency2.Modules
 			await Audio.PlayTracksAsync(url, Context, Context.Channel as ITextChannel, clear: false);
 		}
 
-		[Command("shuffle")]
+		[Command("shuffle"), Alias("shufflequeue", "randomqueue")]
 		public async Task ShuffleAsync()
 		{
 			if (Context.Message.IsPrivate())
