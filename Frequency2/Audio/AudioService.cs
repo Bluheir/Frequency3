@@ -38,30 +38,39 @@ namespace Frequency2.Audio
 		public async Task TrackFinished(LavaPlayer player, LavaTrack ptrack, TrackEndReason endReason)
 		{
 			var guild = _guildConfigs.GetOrAdd(player.VoiceChannel.GuildId, new GuildMusicConfig());
-			
+
+
+			guild.IsPlayed = endReason == TrackEndReason.Replaced;
 
 			LavaTrack track = null;
 
-			if(guild.Repeat && !guild.IsPlayed)
+			if (player.Queue.Count == 0 && !guild.Repeat)
 			{
-				if(player.Queue.Count == 0)
-				{
-					track = ptrack;
-				}
-				else
-				{
-					player.Queue.Enqueue(ptrack);
-					track = player.Queue.Dequeue() as LavaTrack;
-				}
+				if (guild.IsPlayed)
+					guild.IsPlayed = false;
+				return;
 			}
 
+			if (guild.Repeat && player.Queue.Count == 0 && !guild.IsPlayed)
+			{
 
-			if (endReason != TrackEndReason.Replaced && !guild.IsPlayed)
+				track = ptrack;
+				await player.TextChannel.SendMessageAsync("", false, await EmbedMethods.GetEmbedQueue(track, player, ptrack));
+				await player.PlayAsync(track);
+				return;
+
+			}
+			
+			if(guild.Repeat)
+				player.Queue.Enqueue(ptrack);
+			if(!guild.IsPlayed)
+				track = player.Queue.Dequeue() as LavaTrack;
+
+			if (endReason != TrackEndReason.Replaced/* && !guild.IsPlayed)//*/)
 			{
 				await player.TextChannel.SendMessageAsync("", false, await EmbedMethods.GetEmbedQueue(track, player, ptrack));
 				await player.PlayAsync(track);
 			}
-			
 		}
 
 
@@ -148,12 +157,6 @@ namespace Frequency2.Audio
 			
 
 			var guild = _guildConfigs.GetOrAdd(player.VoiceChannel.GuildId, new GuildMusicConfig());
-			if (player.Queue.Count == 0 && guild.Repeat)
-				guild.IsPlayed = false;
-			else
-			{
-				guild.IsPlayed = true;
-			}
 			
 			if(sendError)
 			{
@@ -203,7 +206,6 @@ namespace Frequency2.Audio
 			}
 
 			SocketVoiceChannel myChannel = player.VoiceChannel as SocketVoiceChannel;
-			SocketVoiceChannel userChannel = (Context.User as IVoiceState).VoiceChannel as SocketVoiceChannel;
 
 			if ((player.IsPlaying && myChannel.Users.Count > 2 && !(Context.User as IGuildUser).ContainsRole("DJ")))
 			{
@@ -220,6 +222,8 @@ namespace Frequency2.Audio
 			var tracks = (await LavaRestClient.SearchTracksAsync(url)).Tracks;
 			foreach (var track in tracks)
 			{
+				if (track == tracks.FirstOrDefault())
+					continue;
 				player.Queue.Enqueue(track);
 			}
 
@@ -236,7 +240,7 @@ namespace Frequency2.Audio
 
 					Embed.AddField("Length", track.Length.ToString(), true);
 					Embed.AddField("Tracks in Queue", (player.Queue.Count-1).ToString(), true);
-					Embed.AddField("Next Track", player.Queue.Count == 1 ? "No tracks" : (player.Queue.Items.ToList()[player.Queue.Count] as LavaTrack).Title, true);
+					Embed.AddField("Next Track", player.Queue.Count == 0 ? "No tracks" : (player.Queue.Peek() as LavaTrack).Title, true);
 
 					Embed.ImageUrl = await track.FetchThumbnailAsync();
 
@@ -296,11 +300,18 @@ namespace Frequency2.Audio
 		{
 			var player = LavaClient.GetPlayer(Context.Guild.Id);
 			var user = await Users.GetValue((long)Context.User.Id);
-			var guild = _guildConfigs.GetOrAdd(player.VoiceChannel.GuildId, new GuildMusicConfig());
+			
 
-			if (player == null || !player.IsPlaying)
+			if (player == null)
 			{
 				if(sendError)
+					await textChannel.SendMessageAsync($"{Context.User.Mention} {GetError(17)}");
+				return;
+			}
+			
+			if (!player.IsPlaying)
+			{
+				if (sendError)
 					await textChannel.SendMessageAsync($"{Context.User.Mention} {GetError(17)}");
 				return;
 			}
@@ -312,27 +323,18 @@ namespace Frequency2.Audio
 					await textChannel.SendMessageAsync($"{Context.User.Mention} {GetError(12)}");
 				return;
 			}
-			if (guild.Repeat && player.Queue.Count != 0)
-			{
-				var ptrack = await player.SkipAsync();
-				var track = player.CurrentTrack;
 
-				await textChannel.SendMessageAsync("", false, await EmbedMethods.GetEmbedQueue(track, player, ptrack));
+
+			if (player.Queue.Count < 1)
+			{
+				await player.StopAsync();
+				if (sendError && user.SendCompMessage)
+					await textChannel.SendMessageAsync(":musical_note: Successfully skipped the current track!");
 			}
 			else
 			{
-				if (player.Queue.Count > 0)
-				{
-					var ptrack = await player.SkipAsync();
-					var track = player.CurrentTrack;
-
-					await textChannel.SendMessageAsync("", false, await EmbedMethods.GetEmbedQueue(track, player, ptrack));
-				}
-				else
-					await player.StopAsync();
+				await player.StopAsync();
 			}
-			if(sendError && user.SendCompMessage)
-				await textChannel.SendMessageAsync(":musical_note: Successfully skipped the current track!");
 		}
 		public async Task PauseAsync(ICommandContext Context, ITextChannel textChannel, bool sendError = true)
 		{
@@ -413,6 +415,44 @@ namespace Frequency2.Audio
 			if (user.SendCompMessage && sendError)
 				await textChannel.SendMessageAsync(":musical_note: Toggled repeating for the queue!");
 		}
+
+		public async Task ShuffleAsync(ICommandContext Context, ITextChannel textChannel, bool sendError = true)
+		{
+			var player = LavaClient.GetPlayer(Context.Guild.Id);
+			var user = await Users.GetValue((long)Context.User.Id);
+			var guild = _guildConfigs.GetOrAdd(player.VoiceChannel.GuildId, new GuildMusicConfig());
+
+			if (player == null)
+			{
+				if (sendError)
+					await textChannel.SendMessageAsync($"{Context.User.Mention} {GetError(17)}");
+				return;
+			}
+
+			if (!player.IsPlaying)
+			{
+				if (sendError)
+					await textChannel.SendMessageAsync($"{Context.User.Mention} {GetError(17)}");
+				return;
+			}
+
+			if(player.Queue.Count < 2)
+			{
+				
+			}
+			var myChannel = player.VoiceChannel as SocketVoiceChannel;
+
+			if ((player.IsPlaying && myChannel.Users.Count > 2 && !(Context.User as IGuildUser).ContainsRole("DJ")))
+			{
+				if (sendError)
+					await textChannel.SendMessageAsync($"{Context.User.Mention} {GetError(12)}");
+				return;
+			}
+
+
+			
+		}
+
 		public async Task<LavaTrack> GetTrack(string url, bool prioritiseSoundcloud = false)
 		{
 			try
