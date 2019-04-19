@@ -37,6 +37,10 @@ namespace Frequency2.Types.Commands
 			{
 				18,
 				new CommandErrorFix("No songs in queue", "This error is thrown when you attempt to shuffle the queue and there are less than 2 songs", "Shuffle the queue when there is at least 2 songs.")
+			},
+			{
+				19,
+				new CommandErrorFix("That command doesn't exist", "This error is thrown when you attempt to get the info of a command and the command name doesn't exist", "Search a proper command")
 			}
 		};
 
