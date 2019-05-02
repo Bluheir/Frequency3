@@ -9,7 +9,8 @@ namespace Frequency2.Modules
 	public class UserSettings : ModuleBase<ShardedCommandContext>
 	{
 		[Command("prefix")]
-		public async Task ChangePrefixAsync(string prefix)
+		[Summary("Sets the command prefix for you")]
+		public async Task ChangePrefixAsync([Summary("The new prefix")]string prefix)
 		{
 			if(prefix.Length > 10 || prefix == Context.Client.CurrentUser.Mention)
 			{
@@ -25,8 +26,9 @@ namespace Frequency2.Modules
 			await Users.SaveAsync(user);
 
 		}
-
+		
 		[Command("togglemsg")]
+		[Summary("Disables some messages the bot sends")]
 		public async Task ToggleMsg()
 		{
 			var user = await Users.GetValue((long)Context.User.Id);
