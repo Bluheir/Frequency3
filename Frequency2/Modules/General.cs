@@ -5,6 +5,9 @@ using Frequency2.Methods;
 using Frequency2.Source;
 using Discord;
 using static Frequency2.Methods.MessageMethods;
+using System.Linq;
+using System.Collections.Generic;
+using Discord.WebSocket;
 
 namespace Frequency2.Modules
 {
@@ -49,6 +52,56 @@ namespace Frequency2.Modules
 				Embed.AddField(title, parameters);
 
 			await channel.SendMessageAsync("", false, Embed.Build());
+		}
+		[Command("help")]
+		[Summary("Shows a list of every command")]
+		public async Task GetHelpAsync()
+		{
+
+			var commands = Frequency2Client.Instance.CommandInfos.Keys.ToList();
+
+			int page = 1;
+
+			List<EmbedBuilder> Embeds = new List<EmbedBuilder>();
+			string field = null;
+			
+
+			for(int i = 0; i < commands.Count; i++)
+			{
+				if(i % 10 == 0 || i == commands.Count - 1)
+				{
+					if(page != 1)
+						Embeds[Embeds.Count - 1].Fields[0].Value = field;
+
+					if (i == commands.Count - 1)
+					{
+						field += $"**{i + 1})** {commands[i]}\n";
+						Embeds[Embeds.Count - 1].Fields[0].Value = field;
+						break;
+					}
+
+					Embeds.Add(new EmbedBuilder()
+					{
+						Title = $"Page {page} out of ",
+						Fields = new List<EmbedFieldBuilder>
+						{
+							new EmbedFieldBuilder()
+							{
+								Name = "Commands:",
+							}
+						},
+						Description = "Hint: type **commandinfo <command name>** to get more information about a command"
+					});
+					field = "";
+					page++;
+				}
+				field += $"**{i + 1})** " + commands[i] + "\n";
+
+			}
+			foreach (var embed in Embeds)
+				embed.Title += Embeds.Count;
+			var message = await Context.Channel.SendMessageAsync("", false, Embeds[0].Build());
+			await message.PaginateAsync(Embeds.ToArray());
 		}
 	}
 }
