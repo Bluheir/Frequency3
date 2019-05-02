@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Frequency2.Types.Attributes;
 using Frequency2.Methods;
+using Frequency2.Types.Messages;
 
 namespace Frequency2.Source
 {
@@ -20,9 +21,10 @@ namespace Frequency2.Source
 	{
 
 		private DiscordShardedClient _client;
-		private CommandHandler _commands;
+		public CommandHandler _commands { get; private set; }
 		private IServiceProvider _services;
-		
+		private PaginationService<DiscordShardedClient> paginationService;
+
 		public static Victoria.LavaShardClient LavaClient { get; private set; }
 		private Frequency2Client(){}
 
@@ -123,6 +125,8 @@ namespace Frequency2.Source
 				};
 				return retVal;
 			});
+
+			paginationService = new PaginationService<DiscordShardedClient>(_client);
 
 			await _commands.InitializeAsync();
 			_ = Commands;
