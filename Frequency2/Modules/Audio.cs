@@ -7,6 +7,7 @@ using Frequency2.Methods;
 using Frequency2.Audio;
 using System.Threading.Tasks;
 using Frequency2.Types.Attributes;
+using Frequency2.Types.Messages;
 
 namespace Frequency2.Modules
 {
@@ -52,7 +53,7 @@ namespace Frequency2.Modules
 			await Audio.QueueAsync(query, Context, Context.Channel as ITextChannel, prioritiseSoundcloud: true);
 		}
 
-		[Command("searchsc"), Alias("soundcloudsearch", "playsoundcloud")]
+		[Command("searchsc", RunMode = RunMode.Async), Alias("soundcloudsearch", "playsoundcloud")]
 		[Summary("Joins the current users void channel and plays the specified song. If the url isn't valid, searches SoundCloud for the term")]
 		public async Task SearchSCAsync([Remainder, Summary("The url or search term")]string query)
 		{
@@ -61,7 +62,7 @@ namespace Frequency2.Modules
 			await Audio.PlayAsync(query, Context, Context.Channel as ITextChannel, prioritiseSoundcloud: true);
 		}
 
-		[Command("queue"), Alias("enqueue")]
+		[Command("queue", RunMode = RunMode.Async), Alias("enqueue")]
 		[Summary("Enqueues a song. If the url isn't valid, searches YouTube for the term")]
 		public async Task EnqueueYTAsync([Remainder, Summary("The url or search term")]string query)
 		{
@@ -70,7 +71,7 @@ namespace Frequency2.Modules
 			await Audio.QueueAsync(query, Context, Context.Channel as ITextChannel);
 		}
 
-		[Command("skip")]
+		[Command("skip", RunMode = RunMode.Async)]
 		[Summary("Skips the current track")]
 		public async Task SkipAsync()
 		{
@@ -79,7 +80,7 @@ namespace Frequency2.Modules
 			await Audio.SkipTrackAsync(Context, Context.Channel as ITextChannel);
 		}
 
-		[Command("pause")]
+		[Command("pause", RunMode = RunMode.Async)]
 		[Summary("Pauses/Resumes the current track")]
 		public async Task PauseAsync()
 		{
@@ -88,7 +89,7 @@ namespace Frequency2.Modules
 			await Audio.PauseAsync(Context, Context.Channel as ITextChannel);
 		}
 
-		[Command("repeat")]
+		[Command("repeat", RunMode = RunMode.Async)]
 		[Summary("Toggles repeating tracks")]
 		public async Task RepeatAsync()
 		{
@@ -97,7 +98,7 @@ namespace Frequency2.Modules
 			await Audio.RepeatAsync(Context, Context.Channel as ITextChannel);
 		}
 
-		[Command("queuelist")]
+		[Command("queuelist", RunMode = RunMode.Async)]
 		[Summary("Adds every track from the playlist to the queue")]
 		public async Task QueueList([Remainder, Summary("The url or search term")]string query)
 		{
@@ -106,7 +107,7 @@ namespace Frequency2.Modules
 			await Audio.PlayTracksAsync(query, Context, Context.Channel as ITextChannel, clear: false);
 		}
 
-		[Command("shuffle"), Alias("shufflequeue", "randomqueue")]
+		[Command("shuffle", RunMode = RunMode.Async), Alias("shufflequeue", "randomqueue")]
 		[Summary("Shuffles the queue")]
 		public async Task ShuffleAsync()
 		{
@@ -115,5 +116,17 @@ namespace Frequency2.Modules
 			await Audio.ShuffleAsync(Context, Context.Channel as ITextChannel);
 		}
 
+		[Command("tracks", RunMode = RunMode.Async)]
+		[Summary("Shows a list of tracks in the current queue")]
+		public async Task GetTracksAsync()
+		{
+			if (Context.Message.IsPrivate())
+				return;
+			var tracks = Audio.GetTracks(Context.Guild.Id);
+			if (tracks.Count == 0)
+				return;
+			var message = await Context.Channel.SendMessageAsync(embed: tracks[0]);
+			await message.PaginateAsync(tracks.ToArray());
+		}
 	}
 }
