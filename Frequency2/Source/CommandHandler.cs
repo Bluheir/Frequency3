@@ -14,7 +14,8 @@ namespace Frequency2.Source
 		private readonly DiscordShardedClient _client;
 		private readonly CommandService _commandService;
 		private readonly IServiceProvider _services;
-		private readonly ConcurrentDictionary<ulong, int> _userTimeouts = new ConcurrentDictionary<ulong, int>();
+		internal readonly ConcurrentDictionary<ulong, int> _userTimeouts = new ConcurrentDictionary<ulong, int>();
+		
 		public CommandHandler(DiscordShardedClient client, CommandService commandService, IServiceProvider services)
 		{
 			_client = client;
