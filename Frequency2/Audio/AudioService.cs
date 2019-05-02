@@ -17,6 +17,7 @@ using System.Collections.Generic;
 
 namespace Frequency2.Audio
 {
+	
 	public sealed class AudioService
 	{
 		public static readonly AudioService Instance = new AudioService();
@@ -126,6 +127,60 @@ namespace Frequency2.Audio
 			return new Tuple<AudioSuccessType, LavaPlayer>(Successful, await LavaClient.ConnectAsync(usersChannel, textChannel));
 		}
 
+		public List<Embed> GetTracks(ulong GuildId)
+		{
+			var player = LavaClient.GetPlayer(GuildId);
+			if (player == null)
+				return new List<Embed>();
+			var tracks = player.Queue.Items.Select(x => x as LavaTrack).ToList();
+
+			int page = 1;
+
+			List<EmbedBuilder> Embeds = new List<EmbedBuilder>();
+			var first = player.CurrentTrack;
+			string field = null;
+
+
+			for (int i = 0; i < tracks.Count; i++)
+			{
+				var track = tracks[i];
+				if (i % 7 == 0 || i == tracks.Count - 1)
+				{
+					if (page != 1)
+						Embeds[Embeds.Count - 1].Fields[0].Value = field;
+
+					if (i == tracks.Count - 1)
+					{
+						field += $"**{i + 1})** [{track.Title}]({track.Uri.AbsoluteUri}) by {track.Author}\n";
+						Embeds[Embeds.Count - 1].Fields[0].Value = field;
+						break;
+					}
+					Embeds.Add(new EmbedBuilder()
+					{
+						Title = $"{tracks.Count} Tracks\nPage {page} out of ",
+						Fields = new List<EmbedFieldBuilder>
+						{
+							new EmbedFieldBuilder()
+							{
+								Name = "Tracks:",
+							}
+						},
+						Description = $"Current Track: {first.Title} by {first.Author}"
+					});
+					field = "";
+					page++;
+				}
+				field += $"**{i + 1})** [{track.Title}]({track.Uri.AbsoluteUri}) by {track.Author}\n";
+
+			}
+			page--;
+			return Embeds.Select(x => 
+			{
+				x.Title += page;
+				return x.Build();
+			}).ToList();
+		}
+
 		public async Task<LavaTrack> PlayAsync(string song, ICommandContext Context, ITextChannel textChannel, bool sendError = true, bool prioritiseSoundcloud = false)
 		{
 			var tplayer = await JoinAsync(Context, textChannel, false);
@@ -168,7 +223,7 @@ namespace Frequency2.Audio
 				
 				Embed.AddField("Length", track.Length.ToString(), true);
 				if(guild.Repeat)
-					Embed.AddField("Tracks in Queue", (player.Queue.Count + 1).ToString(), true);
+					Embed.AddField("Tracks in Queue", (player.Queue.Count).ToString(), true);
 				else
 					Embed.AddField("Tracks in Queue", (player.Queue.Count).ToString(), true);
 
@@ -206,7 +261,7 @@ namespace Frequency2.Audio
 			}
 
 			SocketVoiceChannel myChannel = player.VoiceChannel as SocketVoiceChannel;
-
+		
 			if ((player.IsPlaying && myChannel.Users.Count > 2 && !(Context.User as IGuildUser).ContainsRole("DJ")))
 			{
 				if (sendError)
@@ -239,7 +294,7 @@ namespace Frequency2.Audio
 					};
 
 					Embed.AddField("Length", track.Length.ToString(), true);
-					Embed.AddField("Tracks in Queue", (player.Queue.Count-1).ToString(), true);
+					Embed.AddField("Tracks in Queue", (player.Queue.Count).ToString(), true);
 					Embed.AddField("Next Track", player.Queue.Count == 0 ? "No tracks" : (player.Queue.Peek() as LavaTrack).Title, true);
 
 					Embed.ImageUrl = await track.FetchThumbnailAsync();
