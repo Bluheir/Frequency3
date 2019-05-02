@@ -22,6 +22,8 @@ namespace Frequency2.Source
 		{
 			Func<LogMessage, string> func = x =>
 			{
+				if (x.Source == "Gateway" && !x.Message.Contains("Ready"))
+					return "";
 				string text = $"{DateTime.Now} at {x.Source}] {x.Message}";
 				Console.WriteLine(text);
 				return text;
