@@ -4,19 +4,28 @@ using System.Text;
 
 namespace Frequency2.Audio
 {
-	public enum AudioSuccessType
+	public enum AudioSuccessType : byte
 	{
 		/// <summary>
 		/// Successful
 		/// </summary>
-		Successful = 0,
+		Successful = 1,
 		/// <summary>
-		/// Unsuccessful and not valid
+		/// Invalid Permissions
 		/// </summary>
-		Error = 2,
+		InvalidPerms,
 		/// <summary>
 		/// The user is not in a channel for that guild but the bot is
 		/// </summary>
-		Inchannel
+		Inchannel,
+		/// <summary>
+		/// The user is in the same channel as the bot
+		/// </summary>
+		SameChannel,
+		/// <summary>
+		/// The bot and the user isn't in a channel
+		/// </summary>
+		UserNotInChannel
+
 	}
 }
