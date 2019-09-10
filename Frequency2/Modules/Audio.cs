@@ -43,6 +43,22 @@ namespace Frequency2.Modules
 				return;
 			await Audio.PlayTracksAsync(query, Context, Context.Channel as ITextChannel);
 		}
+		[Command("playshuffled", RunMode = RunMode.Async)]
+		[Summary("Adds every track from the playlist, shuffles it and plays the first track")]
+		public async Task PlayShuffledAsync([Remainder, Summary("The url or search term")]string query)
+		{
+			if (Context.Message.IsPrivate())
+				return;
+			await Audio.PlayTracksAsync(query, Context, Context.Channel as ITextChannel,shuffled: true);
+		}
+		[Command("queueshuffled", RunMode = RunMode.Async)]
+		[Summary("Adds every track from the playlist and shuffles it")]
+		public async Task QueueShuffledAsync([Remainder, Summary("The url or search term")]string query)
+		{
+			if (Context.Message.IsPrivate())
+				return;
+			await Audio.PlayTracksAsync(query, Context, Context.Channel as ITextChannel, clear:false, shuffled: true);
+		}
 
 		[Command("queuesc", RunMode = RunMode.Async)] 
 		[Summary("Enqueues a song. If the url isn't valid, searches SoundCloud for the term")]
@@ -128,5 +144,38 @@ namespace Frequency2.Modules
 			var message = await Context.Channel.SendMessageAsync(embed: tracks[0]);
 			await message.PaginateAsync(tracks.ToArray());
 		}
+		[Command("insertsong", RunMode = RunMode.Async)]
+		[Summary("Inserts a song at the specified index of the queue")]
+		public async Task InsertSongAsync([Summary("The index to insert it at")]int index, [Remainder, Summary("The url or search term")]string query)
+		{
+			if (Context.Message.IsPrivate())
+				return;
+			await Audio.InsertSongAsync(query, index, Context, Context.Channel as ITextChannel);
+		}
+		[Command("insertsongsc", RunMode = RunMode.Async)]
+		[Summary("Inserts a song at the specified index of the queue, prioritising soundcloud")]
+		public async Task InsertSongSCAsync([Summary("The index to insert it at")]int index, [Remainder, Summary("The url or search term")]string query)
+		{
+			if (Context.Message.IsPrivate())
+				return;
+			await Audio.InsertSongAsync(query, index, Context, Context.Channel as ITextChannel, true, true);
+		}
+		[Command("volume", RunMode = RunMode.Async)]
+		[Summary("Sets the volume of the current song")]
+		public async Task SetVolume([Summary("The new volume number")]int volume)
+		{
+			if (Context.Message.IsPrivate())
+				return;
+			await Audio.SetVolume(volume, Context, Context.Channel as ITextChannel);
+		}
+		[Command("remove", RunMode = RunMode.Async)]
+		[Summary("Removes the song from the queue at the specified index")]
+		public async Task RemoveSongAsync([Summary("The index to remove the song at")]int index)
+		{
+			if (Context.Message.IsPrivate())
+				return;
+			await Audio.RemoveSongAtAsync(index, Context, Context.Channel as ITextChannel);
+		}
 	}
+
 }
