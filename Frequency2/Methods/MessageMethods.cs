@@ -1,5 +1,7 @@
 ﻿using Discord;
+using Discord.WebSocket;
 using Frequency2.Types.Messages;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -18,27 +20,29 @@ namespace Frequency2.Methods
 		public static bool IsPrivate(this IMessage message)
 		=> message.Channel is IDMChannel;
 
+		
+
 		public static async Task PaginateAsync(this IUserMessage message, params Page[] pages)
-		=> await message.PaginateAsync(0, pages);
+		=> await new PageCollection(pages, message).PaginateAsync();
 
-		public static async Task PaginateAsync(this IUserMessage message, int start, params Page[] pages)
-		=> await PageCollection.PaginateAsync(new PageCollection(pages, message, start));
-
-		public static async Task PaginateAsync(this IUserMessage message, int start, params Embed[] embeds)
+		public static async Task PaginateAsync(this IUserMessage message, params Embed[] embeds)
 		{
 			List<Page> pages = new List<Page>(embeds.Length);
 			foreach (var item in embeds)
 				pages.Add(new Page(item));
-			await message.PaginateAsync(start, pages.ToArray());
+			await message.PaginateAsync(pages.ToArray());
 		}
 
-		public static async Task PaginateAsync(this IUserMessage message, params Embed[] embeds)
-		=> await message.PaginateAsync(0, embeds);
-
-		public static async Task PaginateAsync(this IUserMessage message, int start, params EmbedBuilder[] embeds)
-		=> await message.PaginateAsync(start, embeds.Select(x => x.Build()).ToArray());
-
 		public static async Task PaginateAsync(this IUserMessage message, params EmbedBuilder[] embeds)
-		=> await message.PaginateAsync(0, embeds);
+		=> await message.PaginateAsync(embeds.Select(x => x.Build()).ToArray());
+
+		public static async Task PaginateAsync(this IUserMessage message, PageCollection collection)
+		{
+			if (collection == null)
+				return;
+			if (collection.IsPaginated)
+				return;
+			await collection.PaginateAsync();
+		}
 	}
 }

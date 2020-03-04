@@ -26,6 +26,7 @@ namespace Frequency2.Modules
 			if (maxdefinitions == 0)
 				maxdefinitions = 1;
 			UrbanDictionaryClient client = new UrbanDictionaryClient();
+			
 			var definitions = new List<IDefinition>();
 			{
 				var definition = await client.GetDefinitionAsync(word);

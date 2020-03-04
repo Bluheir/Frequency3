@@ -20,12 +20,12 @@ namespace Frequency2.Source
 	public sealed class Frequency2Client
 	{
 
-		private DiscordShardedClient _client;
+		internal DiscordShardedClient _client;
 		public CommandHandler _commands { get; private set; }
 		private IServiceProvider _services;
 		private PaginationService<DiscordShardedClient> paginationService;
 
-		public static Victoria.LavaShardClient LavaClient { get; private set; }
+		public static Victoria.LavaNode LavaClient { get; private set; }
 		private Frequency2Client(){}
 
 		public static Frequency2Client Instance { get; } = new Frequency2Client();
@@ -147,20 +147,17 @@ namespace Frequency2.Source
 			if (++shardnum == _client.Shards.Count)
 			{
 				await _client.SetGameAsync(Configuration.Config.RichPresence, type: ActivityType.Watching);
-				LavaClient = new Victoria.LavaShardClient();
-
-				LavaClient.Log += Audio.AudioService.Instance.Log;
-				LavaClient.OnTrackFinished += Audio.AudioService.Instance.TrackFinished;
-
-				await LavaClient.StartAsync(_client, new Victoria.Configuration
+				LavaClient = new Victoria.LavaNode(_client, new Victoria.LavaConfig()
 				{
-					AutoDisconnect = false,
-					SelfDeaf = false,
-					LogSeverity = LogSeverity.Info,
-					Host = Configuration.Config.LavaLinkSettings.Host,
-					Password = Configuration.Config.LavaLinkSettings.Password,
-					Port = Configuration.Config.LavaLinkSettings.Port
+					Hostname = Config.Configuration.Config.LavaLinkSettings.Host,
+					Port = (ushort)Config.Configuration.Config.LavaLinkSettings.Port,
+					Authorization = Config.Configuration.Config.LavaLinkSettings.Password
 				});
+
+				LavaClient.OnLog += Audio.AudioService.Instance.Log;
+				LavaClient.OnTrackEnded += Audio.AudioService.Instance.TrackFinished;
+
+				await LavaClient.ConnectAsync();
 			}
 		}
 	}

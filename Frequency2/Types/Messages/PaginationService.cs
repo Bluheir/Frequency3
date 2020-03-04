@@ -11,12 +11,17 @@ namespace Frequency2.Types.Messages
 {
 	public class PaginationService<T> where T : BaseSocketClient
 	{
-		internal static void Paginate(ulong message, PageCollection pages)
+		public static void Paginate(ulong message, PageBase pages)
 		{
 			Instance._messages.Add(message, pages);
 		}
+		public static bool ContainsMessage(ulong message)
+		{
+			return Instance._messages.ContainsKey(message);
+		}
+
 		private readonly T _client;
-		private readonly Dictionary<ulong, PageCollection> _messages;
+		internal readonly Dictionary<ulong, PageBase> _messages;
 
 		public static IReadOnlyList<Emoji> Emojis = new List<Emoji>()
 		{
@@ -24,6 +29,16 @@ namespace Frequency2.Types.Messages
 			new Emoji("\u25C0"),
 			new Emoji("\u25B6"),
 			new Emoji("\u23F9")
+		};
+		public static IReadOnlyList<Emoji> AudioEmojis = new List<Emoji>()
+		{
+			new Emoji("\u23F9"),
+			new Emoji("🎲"),
+			new Emoji("🔁"),
+			new Emoji("\u23ED"),
+			new Emoji("\u27A1"),
+			new Emoji("\u274C")
+			
 		};
 		public static bool ContainsEmoji(string name)
 		=> Emojis.Where(x => x.Name == name).FirstOrDefault() != null;
@@ -35,7 +50,7 @@ namespace Frequency2.Types.Messages
 			if (Instance != null)
 				throw new InvalidOperationException("Cannot create another instance of a singleton");
 			Instance = this;
-			_messages = new Dictionary<ulong, PageCollection>();
+			_messages = new Dictionary<ulong, PageBase>();
 			_client = client;
 			_client.ReactionAdded += _client_ReactionAdded;
 		}
@@ -44,17 +59,17 @@ namespace Frequency2.Types.Messages
 		{
 			if (!_messages.ContainsKey(message.Id))
 				return;
-			if (!ContainsEmoji(reaction.Emote.Name))
-				return;
 			if (_client.CurrentUser.Id != message.Value.Author.Id)
 				return;
 			if (reaction.UserId == _client.CurrentUser.Id)
 				return;
 
-			var collection = _messages[message.Id];
-			string emote = reaction.Emote.Name;
 
-			if(Frequency2Client.Instance._commands._userTimeouts.AddOrUpdate(reaction.User.Value.Id, 1, (ulong id, int i) => { return i + 1; }) == 5)
+
+			var collection = _messages[message.Id];
+
+
+			if (Frequency2Client.Instance._commands._userTimeouts.AddOrUpdate(reaction.User.Value.Id, 1, (ulong id, int i) => { return i + 1; }) == 5)
 			{
 				Frequency2Client.Instance._commands._userTimeouts[reaction.User.Value.Id]--;
 				return;
@@ -62,32 +77,13 @@ namespace Frequency2.Types.Messages
 
 			var cache = await message.GetOrDownloadAsync();
 
-			if (emote == Emojis[0].Name)
-			{
-				await collection.PageAtAsync(0);
-			}
-			else if(emote == Emojis[1].Name)
-			{
-				int page = collection.CurrentPage - 1;
-				if (collection.CurrentPage == 0)
-					page = collection.Count - 1;
-				await collection.PageAtAsync(page);
+			bool remove = await collection.SpecialFunctions(collection, reaction);
 
-			}
-			else if (emote == Emojis[2].Name)
-			{
-				int page = collection.CurrentPage + 1;
-				if (collection.CurrentPage == collection.Count - 1)
-					page = 0;
-				await collection.PageAtAsync(page);
-
-			}
-			else if (emote == Emojis[3].Name)
+			if (remove)
 			{
 				await cache.DeleteAsync();
 				_messages.Remove(cache.Id);
 			}
-
 
 		}
 	}

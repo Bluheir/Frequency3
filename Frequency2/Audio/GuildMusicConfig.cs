@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
-using Victoria.Entities;
+using Victoria;
 
 namespace Frequency2.Audio
 {

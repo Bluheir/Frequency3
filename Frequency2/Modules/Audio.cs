@@ -8,6 +8,8 @@ using Frequency2.Audio;
 using System.Threading.Tasks;
 using Frequency2.Types.Attributes;
 using Frequency2.Types.Messages;
+using System.Linq;
+
 
 namespace Frequency2.Modules
 {
@@ -111,7 +113,7 @@ namespace Frequency2.Modules
 		{
 			if (Context.Message.IsPrivate())
 				return;
-			await Audio.RepeatAsync(Context, Context.Channel as ITextChannel);
+			await Audio.RepeatAsync(Context.Guild, Context.User as IGuildUser, Context.Channel as ITextChannel);
 		}
 
 		[Command("queuelist", RunMode = RunMode.Async)]
@@ -129,7 +131,7 @@ namespace Frequency2.Modules
 		{
 			if (Context.Message.IsPrivate())
 				return;
-			await Audio.ShuffleAsync(Context, Context.Channel as ITextChannel);
+			await Audio.ShuffleAsync(Context.Guild, Context.User as IGuildUser, Context.Channel as ITextChannel);
 		}
 
 		[Command("tracks", RunMode = RunMode.Async)]
@@ -142,7 +144,7 @@ namespace Frequency2.Modules
 			if (tracks.Count == 0)
 				return;
 			var message = await Context.Channel.SendMessageAsync(embed: tracks[0]);
-			await message.PaginateAsync(tracks.ToArray());
+			await new PageCollection(tracks, message).PaginateAsync();
 		}
 		[Command("insertsong", RunMode = RunMode.Async)]
 		[Summary("Inserts a song at the specified index of the queue")]
@@ -175,6 +177,22 @@ namespace Frequency2.Modules
 			if (Context.Message.IsPrivate())
 				return;
 			await Audio.RemoveSongAtAsync(index, Context, Context.Channel as ITextChannel);
+		}
+		[Command("stopall", RunMode = RunMode.Async)]
+		[Summary("Clears the queue and stops all playing songs")]
+		public async Task StopAllAsync()
+		{
+			if (Context.Message.IsPrivate())
+				return;
+			await Audio.StopAllAsync(Context, Context.Channel as ITextChannel);
+		}
+		[Command("sendconfig", RunMode = RunMode.Async)]
+		[Summary("Sends a configuration message that allows you to control the queue")]
+		public async Task SendConfigAsync()
+		{
+			if (Context.Message.IsPrivate())
+				return;
+			await Audio.SendConfigurationMessageAsync(Context.User as IGuildUser, Context.Channel as ITextChannel);
 		}
 	}
 
