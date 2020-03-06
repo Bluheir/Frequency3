@@ -38,7 +38,7 @@ namespace Frequency3.Core
 			if (!(arg is SocketUserMessage))
 				return;
 			var msg = (SocketUserMessage)arg;
-
+			
 			if (msg.Author.IsBot)
 				return;
 			int argPos = 0;
@@ -56,7 +56,6 @@ namespace Frequency3.Core
 				foreach(var command in item.Commands)
 				{
 					string b = GetName(command);
-					Console.WriteLine(b);
 					if (_potentialCommands.ContainsKey(b))
 					{
 						var c = _potentialCommands[b];

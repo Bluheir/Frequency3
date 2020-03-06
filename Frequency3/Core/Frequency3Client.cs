@@ -6,7 +6,7 @@ using Frequency3.Core;
 using System.Reflection;
 using Discord.WebSocket;
 using Frequency3.Audio;
-using System.Threading.Tasks
+using System.Threading.Tasks;
 using Frequency3.Logging;
 
 namespace Frequency3.Core
@@ -51,7 +51,6 @@ namespace Frequency3.Core
 			_client.UserJoined += UserJoined;
 			_client.Log += Log;
 			_client.ShardReady += ShardReady;
-			Console.WriteLine(_config.Token);
 			await _commands.AddModulesAsync(Assembly.GetExecutingAssembly());
 			await _client.LoginAsync(TokenType.Bot, _config.Token, false);
 
