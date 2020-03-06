@@ -185,6 +185,8 @@ _pkginfo.txt
 
 # Others
 ClientBin/
+DiscordBot.sln
+Frequency3/Frequency3.csproj
 ~$*
 *~
 *.dbmdl
