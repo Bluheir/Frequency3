@@ -41,10 +41,12 @@ namespace Frequency3.Core
 			var lava = _config.LavaLinkSettings;
 			
 			_service = new AudioService(lava.Host, lava.Password, lava.Port, _client);
-			_logger = new Logger(@"C:\Users\User\Desktop\Logs\");
+			_logger = new Logger(@$"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
+}\Desktop\Logs\");
 			s = 0;
 			_instance = this;
 		}
+
 
 		public async Task StartAsync()
 		{

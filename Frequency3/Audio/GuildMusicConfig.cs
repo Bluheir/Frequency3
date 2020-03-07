@@ -7,6 +7,7 @@ namespace Frequency3.Audio
 	{
 		public bool Repeat { get; set; }
 		public int? MaxQueueTimes { get; set; }
+        public ulong CurrentUserPlaying { get; set; }
 		public bool IsLocked => MaxQueueTimes == 0;
 		public ConcurrentDictionary<ulong, int> UserQueueTimes { get; }
 		public bool IsPlayed { get; set; }
@@ -33,5 +34,12 @@ namespace Frequency3.Audio
 				return y - 1;
 			});
 		}
-	}
+        public int IncrementUser(ulong id)
+        {
+            return UserQueueTimes.AddOrUpdate(id, 0, (x, y) =>
+            {
+                return y + 1;
+            });
+        }
+    }
 }

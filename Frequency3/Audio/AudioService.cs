@@ -1,6 +1,4 @@
-﻿#pragma warning disable nullable
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using Victoria;
@@ -67,30 +65,30 @@ namespace Frequency3.Audio
 
 			var guild = GetOrAddConfig(player.VoiceChannel.GuildId);
 
-			if (guild.Repeat)
+			if (guild.Repeat) // If the guild enabled repeating, do this
 			{
-				if (guild.IsPlayed)
+				if (guild.IsPlayed) // If the previous playing track was replaced, do this
 				{
-					if (endReason != TrackEndReason.Replaced)
+					if (endReason != TrackEndReason.Replaced) // If the track wasn't replaced, do this
 					{
 						guild.IsPlayed = false;
 						var track = guild.Queue.Dequeue();
 						await player.TextChannel.SendMessageAsync("", false, await EmbedMethods.GetEmbedQueue(track, guild.Queue, ptrack));
 						await player.PlayAsync(track);
 					}
-					else
+					else // If it wasn't replaced, don't do anything because it doesn't need to be added at the end of the queue.
 						return;
 				}
 				else
 				{
-					if (endReason == TrackEndReason.Replaced)
+					if (endReason == TrackEndReason.Replaced) // If the track was replaced, declare that it was replaced
 					{
 						guild.IsPlayed = true;
-						guild.Queue.Enqueue(new TrackInput(ptrack, );
+						guild.Queue.Enqueue(new TrackInput(ptrack, guild.CurrentUserPlaying));
 					}
 					else
 					{
-						guild.Queue.Enqueue(ptrack);
+						guild.Queue.Enqueue(new TrackInput(ptrack, guild.CurrentUserPlaying));
 						var track = guild.Queue.Dequeue();
 						await player.TextChannel.SendMessageAsync("", false, await EmbedMethods.GetEmbedQueue(track, guild.Queue, ptrack));
 						await player.PlayAsync(track);
@@ -98,13 +96,15 @@ namespace Frequency3.Audio
 
 				}
 			}
-			else
+			else // If the guild didn't enable repeating do this
 			{
 				if (endReason != TrackEndReason.Replaced)
 					if (guild.Queue.Count > 0)
 					{
 						var track = guild.Queue.Dequeue();
+                        guild.DecrementUser(guild.CurrentUserPlaying);
 						await player.TextChannel.SendMessageAsync("", false, await EmbedMethods.GetEmbedQueue(track, guild.Queue, ptrack));
+                        guild.CurrentUserPlaying = track.UserInputter;
 						await player.PlayAsync(track);
 					}
 
@@ -152,6 +152,7 @@ namespace Frequency3.Audio
 			}
 			if (sendMsg && sendAdv)
 				await textChannel.SendMessageAsync($":musical_note: {context.User.Mention} Successfuly joined your voice channel!");
+            await _audio.LeaveAsync(guild.VoiceChannel);
 			return await _audio.JoinAsync(context.UsersVC(), textChannel);
 		}
 		public async Task<LavaTrack?> PlayTrackAsync(string song, ICommandContext context, ITextChannel textChannel, bool useSC)
@@ -196,13 +197,21 @@ namespace Frequency3.Audio
 			}
 			if (response.Tracks.Count > 1 && (isLink && song.Contains("playlist?list=")))
 			{
-				for (int i = 1; i < response.Tracks.Count; i++)
+                var tracks = new List<TrackInput>();
+                foreach(var item in response.Tracks)
+                {
+                    tracks.Add(new TrackInput(item, context.User.Id));
+                }
+				for (int i = 1; i < tracks.Count; i++)
 				{
-					guild.Queue.Enqueue(response.Tracks[i]);
+					guild.Queue.Enqueue(tracks[i]);
 				}
 			}
 			var track = response.Tracks.FirstOrDefault();
-			await player.PlayAsync(track);
+            await player.PlayAsync(track);
+
+            guild.CurrentUserPlaying = context.User.Id;
+
 			{
 				EmbedBuilder Embed = new EmbedBuilder();
 
@@ -216,7 +225,7 @@ namespace Frequency3.Audio
 				else
 					Embed.AddField("Tracks in Queue", (guild.Queue.Count).ToString(), true);
 
-				Embed.AddField("Next Track", guild.Queue.Count == 0 ? "No tracks" : (guild.Queue[0] as LavaTrack).Title, true);
+				Embed.AddField("Next Track", guild.Queue.Count == 0 ? "No tracks" : (guild.Queue[0].Track as LavaTrack).Title, true);
 
 				Embed.ImageUrl = await track.FetchArtworkAsync();
 
@@ -241,7 +250,14 @@ namespace Frequency3.Audio
 				return await PlayTrackAsync(song, context, textChannel, useSc);
 			}
 
-			SearchResponse response;
+
+            if (guild.GetUserInputs(context.User.Id) == guild.MaxQueueTimes && !(context.User as SocketGuildUser).HasRole("DJ"))
+            {
+                await textChannel.SendMessageAsync($":musical_note: {context.User.Mention} You cannot add any more music to the queue.");
+                return null;
+            }
+
+            SearchResponse response;
 			if (!isLink)
 			{
 				if (useSc)
@@ -259,13 +275,15 @@ namespace Frequency3.Audio
 				await textChannel.SendMessageAsync(":musical_note: Cannot find the song :(.");
 				return null;
 			}
+            
 			LavaTrack track;
-			guild.Queue.Enqueue(track = response.Tracks.FirstOrDefault());
+            guild.IncrementUser(context.User.Id);
+			guild.Queue.Enqueue(new TrackInput(track = response.Tracks.FirstOrDefault(), context.User.Id));
 			if (response.Tracks.Count > 1 && (isLink && song.Contains("playlist?list=")) && (context.User as IGuildUser).HasRole("DJ"))
 			{
 				for (int i = 1; i < response.Tracks.Count; i++)
 				{
-					guild.Queue.Enqueue(response.Tracks[i]);
+					guild.Queue.Enqueue(new TrackInput(response.Tracks[i], context.User.Id));
 				}
 			}
 
@@ -317,7 +335,8 @@ namespace Frequency3.Audio
 				}
 			}
 			await _audio.LeaveAsync(guild.VoiceChannel);
-		}
+            await textChannel.SendMessageAsync($":musical_note: {context.User.Mention} Successfully left the voice channel.");
+        }
 		public async Task SkipAsync(ICommandContext context, ITextChannel textChannel)
 		{
 			var usersVc = context.UsersVC() as SocketVoiceChannel;
@@ -386,7 +405,27 @@ namespace Frequency3.Audio
 				}
 			}
 			gg.Queue.Shuffle();
-		}
+            await textChannel.SendMessageAsync($":musical_note: {context.User.Mention} Successfully shuffled the queue.");
+        }
+        public async Task SetQueueLimitAsync(ICommandContext context, ITextChannel textChannel, uint limit)
+        {
+            var user = context.User as SocketGuildUser;
+            _audio.TryGetPlayer(context.Guild, out var guild);
+            var p = GetOrAddConfig(context.Guild.Id);
+
+            if (guild == null)
+            {
+                await textChannel.SendMessageAsync($":musical_note: {context.User.Mention} I am not in a voice channel.");
+                return;
+            }
+            else if (!user.HasRole("DJ"))
+            {
+                await textChannel.SendMessageAsync($":musical_note: {context.User.Mention} You don't have the valid permissions to do this.");
+                return;
+            }
+            p.MaxQueueTimes = (int)limit;
+            await textChannel.SendMessageAsync($":musical_note: {context.User.Mention} Successfully changed the max amount of tracks a person can add to the queue to {limit}.");
+        }
 		
 		
 	}
